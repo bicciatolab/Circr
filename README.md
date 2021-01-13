@@ -1,2 +1,5 @@
 # CircR
- Circr, a computational tool for the prediction of circRNA-miRNA associations.
+<p><b>Summary:</b> Here we present CircR, a computational tool for the prediction of circRNA-miRNA associations. It combines publicly available algorithms for de novo prediction of miRNA binding sites on target sequences with experimentally validated miRNA-AGO and miRNA-RNA sites in different organisms. Circr can be used with either the provided support files or with custom ones, allowing the analysis of novel and not previously annotated circRNAs in virtually any species of interest. CircR provides as output an annotated table that allows the user an easy selection of interesting circRNA-miRNA sites for validation and functional investigations.</p>
+<p><b>Availability and implementation:</b> CircR is available at GitHub (@bicciatolab). CircR is written in python 3.6 language and it is released under the GNU GPL3.0 License.</br>
+ <b>Contact:</b> silvio.bicciato.at.unimore.it</br>
+ <b>Supplementary information:</b> Supplementary information is available at Bioinformatics online.</p>
