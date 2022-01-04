@@ -20,8 +20,8 @@ Key features of `Circr` include:
  ## System requirements
 
  * Python version: >= 3.6
- * [miRanda](http://cbio.mskcc.org/miRNA2003/miranda.html)
- * [RNAhybrid](https://bibiserv.cebitec.uni-bielefeld.de/download/tools/rnahybrid.html)
+ * [miRanda](http://www.microrna.org/microrna/getDownloads.do)
+ * [RNAhybrid](https://bibiserv.cebitec.uni-bielefeld.de/rnahybrid?id=rnahybrid_view_download)
  * [TargetScan](http://www.targetscan.org/vert_80/)
  * [Samtools](http://www.htslib.org/)
  * Dependencies: *pandas*, *numpy*, *argparse*, *collections*, *pybedtools*, *functools*, *multiprocessing*,
