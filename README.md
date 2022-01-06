@@ -84,7 +84,7 @@ After downloading the support_files folder, it is necessary to navigate to the `
 	samtools faidx assembly_of_interest.fa
 ```
 
-In case a custom set of files is available, it is possible to provide them directly to `Circr` (please, refer to the [Quick start guide]((https://github.com/bicciatolab/CircR#Quick-start-guide) section for further information).
+In case a custom set of files is available, it is possible to provide them directly to `Circr` (please, refer to the [Quick start guide](https://github.com/bicciatolab/CircR#Quick-start-guide) section for further information).
 
 ## Quick start guide
 Below is provided a list of available options together with the default values for each parameter. 
