@@ -200,7 +200,7 @@ This second case applies, for example, if users are analysing circRNAs from an o
 Indipendently of how `Circr` is run, it will return a comma separated file consisting of 11 fields that are described below:
 
 <p align="center">
-<img src="https://github.com/bicciatolab/CircR/blob/main/docs/Table1.png" width="40%" alt="Circr-output">
+<img src="https://github.com/bicciatolab/CircR/blob/main/docs/Table1.png" width="80%" alt="Circr-output">
 </p>
 
 
