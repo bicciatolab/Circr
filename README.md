@@ -167,7 +167,7 @@ chr17	39980067	39980222	CiCo_mm9_circ_002584	.	-
 The `--coord` option will instruct `Circr` to skip the initial exon/intron splitting and will directly use the coordinates present in the `INPUT` BED file to retrieve the `FASTA` sequence. An example of how to run `Circr` in the coordinates mode is
 
 ```bash
-	python3 /path/to/Circr.py -i circular_mixed.bed --coord -s mouse -v mm9 -o example_coord_circr.csv
+  python3 /path/to/Circr.py -i circular_mixed.bed --coord -s mouse -v mm9 -o example_coord_circr.csv
 ```
 
 ### Running `Circr` with custom annotation files
