@@ -4,8 +4,8 @@
 
 Key features of Circr include:
 
-1. Multifaceted comparison of interaction based on different high level validation software
-2. Self defined internal database for assessment of validated interactions
+1. Multifaceted comparison of interaction based on different prediction software
+2. Self defined internal database for assessment of validated interactions and Argonaute peak occupancy
 3. Fast calculation and multi thread compatibility
 4. Easy to investigate excel structured output table
 
@@ -17,9 +17,9 @@ silvio.bicciato@unimore.it, mattia.forcato@unimore.it
 ## Table of contents
 
 
-* [System requirements](https://github.com/bicciatolab/CircR#System-requirements)
-* [Installation](https://github.com/bicciatolab/CircR#Installation)
-* [Quick start guide](https://github.com/bicciatolab/CircR#Quick-start-guide)
+* [System requirements](https://github.com/bicciatolab/Circr#System-requirements)
+* [Installation](https://github.com/bicciatolab/Circr#Installation)
+* [Quick start guide](https://github.com/bicciatolab/Circr#Quick-start-guide)
 
 
 ## System requirements
@@ -40,14 +40,15 @@ silvio.bicciato@unimore.it, mattia.forcato@unimore.it
 For the installation of `miRanda` and `RNAhybrid`, please refer to the instructions provided on their website. In case the sites are unavailable, it is still possible to install both tools through [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) from command line. For `miRanda`, run either one of the following:
 
 ```bash
-	conda install -c bioconda miranda
-	conda install -c bioconda/label/cf201901 miranda 
+  conda install -c bioconda miranda
+  conda install -c bioconda/label/cf201901 miranda
 ```
 while for `RNAhybrid` use:
 
 ```bash
-	conda install -c genomedk rnahybrid
+  conda install -c genomedk rnahybrid
 ```
+After the installation has been completed for both tools, the executable file must be copied in either `/usr/bin/` or `/usr/local/bin/` folder. For `miRanda` it can be found in the `/path/to/anaconda3/pkgs/miranda<version_number>/bin/` folder, while for `RNAhybrid` it is located in the `/path/to/anaconda3/pkgs/RNAhybrid<version_number>/src/`
 
 #### Installing Pyhton libraries
 All required libraries can be installed through `pip` like ```pip3 install pybedtools```
@@ -65,29 +66,29 @@ All required libraries can be installed through `pip` like ```pip3 install pybed
 For simplicity, we provide all the necessary files in a dedicated [drive folder](https://drive.google.com/drive/folders/1zJVyzEFAMtvZTTueWRocxXs63jUxsl-U?usp=sharing) that can be downloaded (at least 8Gb of space is required) within the `Circr` folder downloaded from `GitHub`. This folder contains the support files for 4 different organisms (_human_, _mouse_, _worm_ and _fruitfly_) in 2 different genome versions for each. If only one `organism` or `genome version` is necessary, it is possible to retrieve only the desired one as long as the expected folder tree structure (see below, in bold are depicted the expected folders) is maintained.
 
 ```
-	Circr
-	  |_ Circr.py
-	  |_ tools
-	  |   |_ targetscan_70.pl
-	  |_ support_files
-	      |_miRNA
-	      |_<organism_of_interest>
-	          |_<assembly_of_interest>
- 
+  Circr
+   |_ Circr.py
+   |_ tools
+   |   |_ targetscan_70.pl
+   |_ support_files
+       |_miRNA
+       |_<organism_of_interest>
+          |_<assembly_of_interest>
+
 ```
 
 After downloading the support_files folder, it is necessary to navigate to the `assembly_of_interest` folder, unzip the genome `FASTA` file and index it
 
 ```bash
-	cd /path/to/Circr/support_files/organism_of_interest/assembly_of_interest
-	gunzip assembly_of_interest.fa.gz
-	samtools faidx assembly_of_interest.fa
+  cd /path/to/Circr/support_files/organism_of_interest/assembly_of_interest
+  gunzip assembly_of_interest.fa.gz
+  samtools faidx assembly_of_interest.fa
 ```
 
 In case a custom set of files is available, it is possible to provide them directly to `Circr` (please, refer to the [Quick start guide](https://github.com/bicciatolab/CircR#Quick-start-guide) section for further information).
 
 ## Quick start guide
-Below is provided a list of available options together with the default values for each parameter. 
+Below is provided a list of available options together with the default values for each parameter.
 
 ```
 python3 Circr.py -h
@@ -124,7 +125,7 @@ optional arguments:
                         Defines output file name. Default is Circr_Analysis.txt
 ```
 
- 
+
 
 
 ### Running `Circr` with the provided annotation files
@@ -132,34 +133,34 @@ optional arguments:
 The `INPUT` file is a list of circRNA coordinates in BED format, an example provided below:
 
 ```
-chr1	137428925	137433876	CiCo_mm9_circ_000076	469	-
-chr1	154702978	154706632	CiCo_mm9_circ_000105	604	-
-chr1	159104273	159109383	CiCo_mm9_circ_000118	953	-
-chr1	159216861	159229395	CiCo_mm9_circ_000119	252	-
-chr17	39980067	39980222	CiCo_mm9_circ_002584	155	-
+chr1	137428925	137433876	CiCo_mm9_circ_000076	.	-
+chr1	154702978	154706632	CiCo_mm9_circ_000105	.	-
+chr1	159104273	159109383	CiCo_mm9_circ_000118	.	-
+chr1	159216861	159229395	CiCo_mm9_circ_000119	.	-
+chr17	39980067	39980222	CiCo_mm9_circ_002584	.	-
 
 ```
 
 `Circr` can be run with the following command
 
 ```bash
-	python3 /path/to/Circr.py -i circular_mixed.bed -s mouse -v mm9 -o example_circr.csv
+  python3 /path/to/Circr.py -i circular_mixed.bed -s mouse -v mm9 -o example_circr.csv
 ```
 
-`-s` and `-v` parameters instruct `Circr` to use the mm9 genome version for mouse and to save the data in the `example_circ.csv` file. By default, the analysis will run with 8 threads but this number can be changed through the `--threads` option. 
+`-s` and `-v` parameters instruct `Circr` to use the mm9 genome version for mouse and to save the data in the `example_circ.csv` file. By default, the analysis will run with 8 threads but this number can be changed through the `--threads` option.
 
 The first steps of the analysis will evaluate whether each circRNA overlaps a gene annotated on the same strand. In this case, the circRNA will be "split" into its exon/intron coordinates and only the exon will be kept to retrieve the circRNA FASTA sequence. Intergenic circRNAs and antisense to genes will be treated as a single exon (i.e. no splitting into features). Since circRNAs can undergo alternative splicing, it is possible that not all exons are included or the exact features included are not known. In this case, it is possible to run Circr with the `-c` or `--coord` option with the same file as shown before or supply an `INPUT` that includes the coordinates of all the expressed features (see an example below)
 
 ```
-chr1	137428925	137429291	CiCo_mm9_circ_000076	366	-
-chr1	137433773	137433876	CiCo_mm9_circ_000076	103	-
-chr1	154702978	154703132	CiCo_mm9_circ_000105	154	-
-chr1	154703578	154703741	CiCo_mm9_circ_000105	163	-
-chr1	154706008	154706144	CiCo_mm9_circ_000105	136	-
-chr1	154706481	154706632	CiCo_mm9_circ_000105	151	-
-chr1	159216861	159216985	CiCo_mm9_circ_000119	124	-
-chr1	159229267	159229395	CiCo_mm9_circ_000119	128	-
-chr17	39980067	39980222	CiCo_mm9_circ_002584	155	-
+chr1	137428925	137429291	CiCo_mm9_circ_000076	.	-
+chr1	137433773	137433876	CiCo_mm9_circ_000076	.	-
+chr1	154702978	154703132	CiCo_mm9_circ_000105	.	-
+chr1	154703578	154703741	CiCo_mm9_circ_000105	.	-
+chr1	154706008	154706144	CiCo_mm9_circ_000105	.	-
+chr1	154706481	154706632	CiCo_mm9_circ_000105	.	-
+chr1	159216861	159216985	CiCo_mm9_circ_000119	.	-
+chr1	159229267	159229395	CiCo_mm9_circ_000119	.	-
+chr17	39980067	39980222	CiCo_mm9_circ_002584	.	-
 
 ```
 
@@ -200,7 +201,7 @@ This second case applies, for example, if users are analysing circRNAs from an o
 Indipendently of how `Circr` is run, it will return a comma separated file consisting of 11 fields that are described below:
 
 <p align="center">
-<img src="https://github.com/bicciatolab/CircR/blob/main/docs/Table1.png" width="80%" alt="Circr-output">
+<img src="https://github.com/bicciatolab/Circr/blob/main/docs/Table1.png" width="80%" alt="Circr-output">
 </p>
 
 
@@ -214,6 +215,3 @@ chr1,10201577,10201598,mmu-let-7i-5p,CiCo_mm9_circ_000003,-,No Seed,INT_M_2,1,No
 chr1,10192680,10192702,mmu-let-7i-3p,CiCo_mm9_circ_000003,-,7mer-m8,INT_M_3,1,No,No
 chr1,10201743,10201765,mmu-miR-1a-1-5p,CiCo_mm9_circ_000003,-,7mer-m8,INT_M_4,1,No,No
 ```
-
-
-
