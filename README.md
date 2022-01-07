@@ -37,7 +37,7 @@ silvio.bicciato@unimore.it, mattia.forcato@unimore.it
 `Circr` is structured as a standalone python script. Once the required python modules, `miRanda` and `RNAhybrid`  have been installed, `Circr` can be run in the suitable environment.
 
 #### Installing `miRanda` and `RNAhybrid`
-For the installation of `miRanda` and `RNAhybrid`, please refer to the instructions provided on their website. In case the sites are unavailable, it is still possible to install both tools through [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) from command line. For `miRanda`, run  either one of the following:
+For the installation of `miRanda` and `RNAhybrid`, please refer to the instructions provided on their website. In case the sites are unavailable, it is still possible to install both tools through [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) from command line. For `miRanda`, run either one of the following:
 
 ```bash
 	conda install -c bioconda miranda
@@ -53,12 +53,12 @@ while for `RNAhybrid` use:
 All required libraries can be installed through `pip` like ```pip3 install pybedtools```
 
 #### Support files
-`Circr` requires a set of annotation file to perform the various step of the analysis, which are listed below:
+`Circr` requires a set of annotation files to perform the various step of the analysis, which are listed below:
 
 * Reference genome sequence in FASTA format
 * Gene annotation in GTF format
 * rRNA coordinates in BED format
-* miRNA sequence in FASTA format
+* miRNA sequences in FASTA format
 * validated miRNA:RNA interactions in BED format
 * Argonaute peak file in BED format
 
@@ -146,9 +146,9 @@ chr17	39980067	39980222	CiCo_mm9_circ_002584	155	-
 	python3 /path/to/Circr.py -i circular_mixed.bed -s mouse -v mm9 -o example_circr.csv
 ```
 
-`-s` and `-v` parameters instruct `Circr` to use the mm9 genome version for mouse and to save the data in the `example_circ.csv` file. By default, the analysis will run with 8 threds but this number can be changed through the `--threads` option. 
+`-s` and `-v` parameters instruct `Circr` to use the mm9 genome version for mouse and to save the data in the `example_circ.csv` file. By default, the analysis will run with 8 threads but this number can be changed through the `--threads` option. 
 
-The first steps of the analysis will evaluate whether each circRNA overlaps a gene annotated on the same strand. In this case, the circRNA will be "split" into its exon/intron coordinates and only the exon will be kept to retrieve the circRNA FASTA sequence. Intergenic circRNAs and antisense to genes will be treated as a single exon (i.e. no splitting into features). Since circRNAs can undergoe alternative splicing, it is possible that not all exons might be included or the exact features included are not known. In this case, it is possible to run Circr with the `-c` or `--coord` option with the same file as shown before or supply an `INPUT` that includes the coordinates of all the expressed features (see an example below)
+The first steps of the analysis will evaluate whether each circRNA overlaps a gene annotated on the same strand. In this case, the circRNA will be "split" into its exon/intron coordinates and only the exon will be kept to retrieve the circRNA FASTA sequence. Intergenic circRNAs and antisense to genes will be treated as a single exon (i.e. no splitting into features). Since circRNAs can undergo alternative splicing, it is possible that not all exons are included or the exact features included are not known. In this case, it is possible to run Circr with the `-c` or `--coord` option with the same file as shown before or supply an `INPUT` that includes the coordinates of all the expressed features (see an example below)
 
 ```
 chr1	137428925	137429291	CiCo_mm9_circ_000076	366	-
@@ -170,7 +170,7 @@ The `--coord` option will instruct `Circr` to skip the initial exon/intron split
 ```
 
 ### Running `Circr` with custom annotation files
-There are two possible option to run `Circr` with custom files:
+There are two possible options to run `Circr` with custom files:
 
 1. Specify organism and genome version and then provide one or more custom files
 2. Leave the default organism and genome version, but then supply ALL annotation files
@@ -185,7 +185,7 @@ This case applies, for example, if users are performing the analysis on tissue-s
 ```
 
 #### Providing ALL files
-This second case applies, for example, if users are analysing circRNAs from an organism other than the 4 provided. In this case, we suggest to leave the `organism` and `genome version` to default values (`human` and `hg38` respectively) and then manually supply all the necessary files. `Circr` can be run as:
+This second case applies, for example, if users are analysing circRNAs from an organism other than the 4 provided. In this case, we suggest to omit the `organism` and `genome version` arguments and then manually supply all the necessary files. `Circr` can be run as:
 
 ```bash
   python3 /path/to/Circr.py -i circular_mixed.bed \
