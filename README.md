@@ -50,7 +50,7 @@ while for `RNAhybrid` use:
 ```
 After the installation has been completed for both tools, the executable file must be copied in either `/usr/bin/` or `/usr/local/bin/` folder. For `miRanda` it can be found in the `/path/to/anaconda3/pkgs/miranda<version_number>/bin/` folder, while for `RNAhybrid` it is located in the `/path/to/anaconda3/pkgs/RNAhybrid<version_number>/src/`
 
-#### Installing Pyhton libraries
+#### Installing Python libraries
 All required libraries can be installed through `pip` like ```pip3 install pybedtools```
 
 #### Support files
