@@ -1,6 +1,6 @@
 # _Circr_
 
-`Circr` is a computational tool for the prediction of circRNA-miRNA associations. It combines publicly available algorithms for de novo prediction of miRNA binding sites on target sequences with experimentally validated miRNA-AGO and miRNA-RNA sites in different organisms. `Circr` can be used with either the provided support files or with custom ones, allowing the analysis of novel and not previously annotated circRNAs in virtually any species of interest. `Circr` provides as output an annotated table that allows the user an easy selection of interesting circRNA-miRNA sites for validation and functional investigations.
+`Circr` is a computational tool for the prediction of miRNA:circRNA associations. It combines publicly available algorithms for de novo prediction of miRNA binding sites on target sequences with experimentally validated miRNA-AGO and miRNA:RNA sites in different organisms. `Circr` can be used with either the provided support files or with custom ones, allowing the analysis of novel and not previously annotated circRNAs in virtually any species of interest. `Circr` provides as output an annotated table that allows the user an easy selection of interesting miRNA:circRNA sites for validation and functional investigations.
 
 Key features of Circr include:
 
