@@ -50,7 +50,7 @@ while for `RNAhybrid` use:
 ```
 After the installation has been completed for both tools, the executable file must be copied in either `/usr/bin/` or `/usr/local/bin/` folder. For `miRanda` it can be found in the `/path/to/anaconda3/pkgs/miranda<version_number>/bin/` folder, while for `RNAhybrid` it is located in the `/path/to/anaconda3/pkgs/RNAhybrid<version_number>/src/`
 
-#### Installing Python libraries
+#### Installing Pyhton libraries
 All required libraries can be installed through `pip` like ```pip3 install pybedtools```
 
 #### Support files
@@ -63,7 +63,7 @@ All required libraries can be installed through `pip` like ```pip3 install pybed
 * validated miRNA:RNA interactions in BED format
 * Argonaute peak file in BED format
 
-For simplicity, we provide all the necessary files in a dedicated [drive folder](https://drive.google.com/drive/folders/1zJVyzEFAMtvZTTueWRocxXs63jUxsl-U?usp=sharing) that can be downloaded (at least 8Gb of space is required) within the `Circr` folder downloaded from `GitHub`. This folder contains the support files for 4 different organisms (_human_, _mouse_, _worm_ and _fruitfly_) in 2 different genome versions for each. If only one `organism` or `genome version` is necessary, it is possible to retrieve only the desired one as long as the expected folder tree structure (see below, in bold are depicted the expected folders) is maintained.
+For simplicity, we provide all the necessary files in a dedicated [drive folder](https://drive.google.com/drive/folders/1zJVyzEFAMtvZTTueWRocxXs63jUxsl-U?usp=sharing) that can be downloaded (at least 8Gb of space is required) within the `Circr` folder downloaded from `GitHub`. This folder contains the support files for 4 different organisms (_human_, _mouse_, _worm_ and _fruitfly_) in 2 different genome versions for each. If only one `organism` or `genome version` is necessary, it is possible to retrieve only the desired one as long as the expected folder tree structure (see below) is maintained.
 
 ```
   Circr
@@ -125,7 +125,8 @@ optional arguments:
                         Defines output file name. Default is Circr_Analysis.txt
 ```
 
-
+### Test data
+In the `docs` folder we provide a set of circRNAs predicted to be expressed in the developing mouse brain (Dori et al., 2019). Data were obtained from RNAseR treated RNA of the three main cell population of the lateral cortex (proliferating and differentiating progenitors and newborn neurons). From this cohort of sequences (available as `Supplemental Data 1` of Dori et al., 2019), we selected 100 circRNAs of different lengths overlapping genes in the sense and antisense strand, and intergenic ones to cover all possible genomic features of circRNAs. This short dataset can be used as input to test that everything has been setup correctly.
 
 
 ### Running `Circr` with the provided annotation files
