@@ -385,7 +385,7 @@ def getUTR(taxa):
 	else:
 		return '3utr_fly'
 
-def third_party_processes(data_dict, taxa_number, cores, mature_file, acronym):
+def third_party_processes(data_dict, taxa_number, cores, mature_file, acronym, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybid_max, rnahybrid_hit, rnahybrid_energy):
 	#Set the processes for the run of the three software
 	logging.info("Setting the processes for the three software run up")
 	DB = pd.DataFrame(columns = ['miRNA Name','Circ Name', 'Seed Category', 'Start', 'End', 'ID'])
@@ -402,8 +402,8 @@ def third_party_processes(data_dict, taxa_number, cores, mature_file, acronym):
 		w.writerow([item])
 		w.writerow([data_dict[item]])
 		k.writerow([item.lstrip('>')+'\t'+str(taxa_number)+'\t'+data_dict[item]])
-		processes.append('miranda {2} {0} -out {1}'.format(inp,'mir_TMP_'+output, mature_file))						#<-- check input file for miranda
-		processes.append('RNAhybrid -t {0} -q {2} -s {3} > {1}'.format(inp,'hyb_TMP_'+output, mature_file, UTR))	#<-- check support file for RNAhybrid
+		processes.append('miranda -sc {3} -en {4} -scale {5} -go {6} -ge {7} {2} {0} -out {1}'.format(inp,'mir_TMP_'+output, mature_file, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge))						#<-- check input file for miranda
+		processes.append('RNAhybrid -b {5} -m {4} -e {6} -t {0} -q {2} -s {3} > {1}'.format(inp,'hyb_TMP_'+output, mature_file, UTR, rnahybid_max, rnahybrid_hit, rnahybrid_energy))	#<-- check support file for RNAhybrid
 		processes.append('{0}tools/targetscan_70.pl {0}support_files/miRNA/miR_family_info.txt {1} {2}'.format(file_path,'TS_'+inp, 'TS_TMP_'+output))#<-- check support file for targetscan
 	#pool the analysis of the 3 software (RNAhybrid is the bottleneck)
 	logging.info("Creating the pooling for the multi core process run up")
@@ -475,8 +475,33 @@ def filter_interactions(valInt, AGO, tab):
 	filtered = add_interactions(filtered, AGO_intersected, 'AGO')
 	return filtered
 
+#Add the notation from the CircBase database dump file
+#from the supprot files
+def add_CircBase_annotation(table, genome_version):
+	#get path of the CircBase dump
+	#need a getCircrPath?
+	CircBase = pd.read_csv('dump.bed', sep='\t', names=['Chrom', 'Start', 'End', 'Circ Name', 'Strand', 'Organism'])
+	#selecting only circulars of the same genome version investigated
+	CircBase = CircBase.loc[CircBase['Organism'] == 'genome_version]
+	#merging into single entry for perfect match
+	CircBase['ToBeMatched'] = CircBase['Chrom'] + CircBase['Start'].astype(str) + CircBase['End'].astype(str) + CircBase['Strand'].astype(str)
+	table['ToBeMatched'] = table['Chrom'] + table['Start'].astype(str) + table['End'].astype(str) + table['Strand'].astype(str)
+	circ_match = list(table['ToBeMatched'].unique())
+	db_match = list(CircBase['ToBeMatched'].unique())
+	#matching on the unique sets
+	match = list(set(circ_match).intersection(set(db_match)))
+	#defaulting new column to output table
+	table['CircBase Name'] = 'Not Available'
+	#then adding matched instances
+	for m in match:
+	    table.loc[table['ToBeMatched'] == m, 'CircBase Name'] = CircBase.loc[CircBase['ToBeMatched'] == m, 'Name']
+	#and dropping not needed column
+	table = table.drop(['ToBeMatched'], 1)
+	return table	
+
 ############## END CODE #################
-def main(bedfile, gtf, rseqc, AGO, TAXA, outfile, Genome, cores, valid_interactions, mirna_mature, mirna_acronym, coord):  # valid_interactions
+def main(bedfile, gtf, rseqc, AGO, TAXA, outfile, Genome, cores, valid_interactions, mirna_mature, mirna_acronym, coord, genome_version,
+		 miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybid_max, rnahybrid_hit, rnahybrid_energy):  # valid_interactions
 	begin = time.time()
 	if coord:
 		logging.info("Creating Circular Database and Retrieving Coordinates")
@@ -487,11 +512,13 @@ def main(bedfile, gtf, rseqc, AGO, TAXA, outfile, Genome, cores, valid_interacti
 		logging.info("Creating Circular Database and Retrieving Coordinates")
 		circ_dict, circulars, coordinates = create_circular_DB(data_exons, df_bed, rseqc, Genome)
 	logging.info("Performing analysis with RNAhybrid, Miranda and TargetScan")
-	circular_database = third_party_processes(circ_dict, TAXA, cores, mirna_mature, mirna_acronym)
+	circular_database = third_party_processes(circ_dict, TAXA, cores, mirna_mature, mirna_acronym, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybid_max, rnahybrid_hit, rnahybrid_energy)
 	logging.info("Comparing Predicted Circulars")
 	table = compare_predicted(coordinates, circulars, circular_database)
 	logging.info("Adding Annotation to Predicted Interactions")
 	interactions = filter_interactions(valid_interactions, AGO, table)
+	logging.info('Adding information from CircBase annotation')
+	interactions = add_CircBase_annotation(interactions, genome_version)
 	logging.info('Printing results table in %s', outfile)
 	interactions.to_csv(outfile, index=False)
 	end = time.time() - begin
@@ -517,6 +544,15 @@ if __name__ == "__main__":
 	parser.add_argument("--validated_interactions", type=str, help="Alternative validated interactions file. Default uses data for selected organism.", default="none")
 	parser.add_argument("--threads", type=int, help="Set the number of threads for multiprocess. Default is 8 cores", default=8)
 	parser.add_argument("-o","--output", type=str,help="Defines output file name. Default is Circr_Analysis.txt", default="Circr_Analysis.csv")
+	parser.add_argument("-Msc", type=float, help="Set score threshold, default 140. MIRANDA Parameter", default="140.0")
+	parser.add_argument("-Men", type=float, help="Set energy threshold to -value Kcal/mol. Default 1 (-1). MIRANDA Parameter", default="1.0")
+	parser.add_argument("-Mscale", type=float, help="Set scaling parameter. Default 4. MIRANDA Parameter", default="4.0")
+	parser.add_argument("-Mgo", type=float, help="Set gap-open penalty to -value. Default 4 (-4). MIRANDA Parameter", default="4.0")
+	parser.add_argument("-Mge", type=float, help="Set gap-extend penalty to -value. Default 9 (-9). MIRANDA Parameter", default="9.0")
+	parser.add_argument("-RHmax", type=int, help="The  maximum  allowed  length of a target sequence. Default is 10000000. RNAhybrid Parameter", default="10000000")
+	parser.add_argument("-RHhit", type=int, help="Maximal number of hits to show. Default is 100000000. RNAhybrid Parameter", default="100000000")
+	parser.add_argument("-RHen", type=int, help="Energy cut-off. Default is 0. RNAhybrid Parameter", default="0")
+
 	args = parser.parse_args()
 
 	logging.basicConfig(filename='run.log', format='%(asctime)s - %(levelname)s:	%(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
@@ -552,4 +588,23 @@ if __name__ == "__main__":
 
 	logging.info('Running analysis on %s; genome set to %s and version %s', args.input, args.organism, args.genome_version)
 
-	main(args.input, args.gtf, args.rRNA, args.AGO, DataTree[args.organism][args.genome_version]['TAXA'], args.output, args.genome, args.threads, args.validated_interactions, args.miRNA, DataTree[args.organism]['acronym'], args.coord) #valid_interaction,
+	main(args.input,
+		 args.gtf,
+		 args.rRNA,
+		 args.AGO,
+		 DataTree[args.organism][args.genome_version]['TAXA'],
+		 args.output,
+		 args.genome,
+		 args.threads,
+		 args.validated_interactions,
+		 args.miRNA, DataTree[args.organism]['acronym'],
+		 args.coord,
+		 args.genome_version,
+		 args.Msc,
+		 args.Men,
+		 args.Mscale,
+		 args.Mgo,
+		 args.Mge,
+		 args.RHmax,
+		 args.RHhit,
+		 args.RHen) #valid_interaction,
