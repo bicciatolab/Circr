@@ -307,14 +307,14 @@ def add_interactions(db, interactions, column):
 			db.loc[db.ID == item, column] = 'Yes'
 	return db
 
-def calculate_exons(bedfile, gtf, rseqc, AGO):
+def calculate_exons(bedfile, gtf, rrna):
 	logging.info("Loading input bed file: %s", str(bedfile))
 	input_bed = pybedtools.BedTool(bedfile)
 	bed_to_df = input_bed.to_dataframe()
 	logging.info("Loading input GTF file: %s",str(gtf))
 	gtf_file = pybedtools.BedTool(gtf)
-	logging.info("Loading rRNA file: %s", str(rseqc))
-	rseqc_file = pybedtools.BedTool(rseqc)
+	logging.info("Loading rRNA file: %s", str(rrna))
+	rrna_file = pybedtools.BedTool(rrna)
 	data = gtf_file.intersect(input_bed, wo=True, s=True)
 	logging.info("Generating exons dataframe and polishing data")
 	df_data = data.to_dataframe(names=['chr','gene_biotype','feature','start','end','6','strand','7','gene_info','c_chr','c_start','c_end','c_name','c_length','c_strand','overlap']).drop(['6','7','gene_biotype'], axis=1)
@@ -329,7 +329,8 @@ def calculate_exons(bedfile, gtf, rseqc, AGO):
 	exons['start'] = exons['start']-1
 	logging.info("Returning dataframe")
 	return exons, bed_to_df
-def create_circular_DB(exons, bed_dataframe, rseqc_file, genome):
+
+def create_circular_DB(exons, bed_dataframe, rrna_file, genome):
 	coordinates = pd.DataFrame()
 	circulars = list(exons['c_name'].unique())
 	logging.info("Calculating circulars coordinates")
@@ -341,7 +342,7 @@ def create_circular_DB(exons, bed_dataframe, rseqc_file, genome):
 				coordinates = coordinates.append(slice[['chr','start','end','c_name','overlap','strand']])
 	coordinates = coordinates.append(bed_dataframe.loc[bed_dataframe['name'].isin(list(set(list(bed_dataframe['name'].unique())).symmetric_difference(set(list(coordinates['c_name'].unique())))))].rename(columns={'chrom':'chr','name':'c_name','score':'overlap'})).drop_duplicates()
 	coord_bed = pybedtools.BedTool.from_dataframe(coordinates)
-	coordinates = coord_bed.intersect(rseqc_file, wa=True, v=True)
+	coordinates = coord_bed.intersect(rrna_file, wa=True, v=True)
 	coord_final = coordinates.to_dataframe()
 	coordinates.sequence(fi=genome,fo='output_fasta.fa', tab=True, name=True, s=True)
 	fasted = pd.read_csv('output_fasta.fa', sep='\t', names=['circs','sequence'])
@@ -349,19 +350,19 @@ def create_circular_DB(exons, bed_dataframe, rseqc_file, genome):
 	os.system('rm output_fasta.fa')
 	fasted = pd.concat([fasted, fasted['circs'].str.split('::', expand=True).rename(columns={0:'circ_name',1:'position'})], axis=1).drop(['circs'],axis=1)
 	circulars = list(fasted['circ_name'].unique())
-	logging.info("Creating input files for miRanda, RNAhybrid and TargetScan")
+	logging.info("Retrieving FASTA sequences")
 	Data = {}
 	for circ_name in circulars:
 		Data['>'+circ_name] = ''.join(fasted.loc[fasted['circ_name']==circ_name]['sequence'].to_list())
 	return Data, circulars, coord_final
 
-def starting_from_coord(bedfile, rseqc, genome):
+def starting_from_coord(bedfile, rrna, genome):
 	logging.info("Loading input bed file with coordinates: %s", str(bedfile))
 	input_bed = pybedtools.BedTool(bedfile)
 	bed_to_df = input_bed.to_dataframe()
-	logging.info("Loading rseqc file: %s", str(rseqc))
-	rseqc_file = pybedtools.BedTool(rseqc)
-	coordinates = input_bed.intersect(rseqc_file, wa=True, v=True)
+	logging.info("Loading rRNA file: %s", str(rrna))
+	rrna_file = pybedtools.BedTool(rrna)
+	coordinates = input_bed.intersect(rrna_file, wa=True, v=True)
 	coord_final = coordinates.to_dataframe()
 	coordinates.sequence(fi=genome,fo='output_fasta.fa', tab=True, name=True, s=True)
 	fasted = pd.read_csv('output_fasta.fa', sep='\t', names=['circs','sequence'])
@@ -369,7 +370,7 @@ def starting_from_coord(bedfile, rseqc, genome):
 	os.system('rm output_fasta.fa')
 	fasted = pd.concat([fasted, fasted['circs'].str.split('::', expand=True).rename(columns={0:'circ_name',1:'position'})], axis=1).drop(['circs'],axis=1)
 	circulars = list(fasted['circ_name'].unique())
-	logging.info("Creating input files for miRanda, RNAhybrid and TargetScan")
+	logging.info("Retrieving FASTA sequences")
 	Data = {}
 	for circ_name in circulars:
 		Data['>'+circ_name] = ''.join(fasted.loc[fasted['circ_name']==circ_name]['sequence'].to_list())
@@ -385,7 +386,7 @@ def getUTR(taxa):
 	else:
 		return '3utr_fly'
 
-def third_party_processes(data_dict, taxa_number, cores, mature_file, acronym, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybid_max, rnahybrid_hit, rnahybrid_energy):
+def third_party_processes(data_dict, taxa_number, cores, mature_file, acronym, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybid_max):
 	#Set the processes for the run of the three software
 	logging.info("Setting the processes for the three software run up")
 	DB = pd.DataFrame(columns = ['miRNA Name','Circ Name', 'Seed Category', 'Start', 'End', 'ID'])
@@ -402,23 +403,25 @@ def third_party_processes(data_dict, taxa_number, cores, mature_file, acronym, m
 		w.writerow([item])
 		w.writerow([data_dict[item]])
 		k.writerow([item.lstrip('>')+'\t'+str(taxa_number)+'\t'+data_dict[item]])
-		processes.append('miranda -sc {3} -en {4} -scale {5} -go {6} -ge {7} {2} {0} -out {1}'.format(inp,'mir_TMP_'+output, mature_file, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge))						#<-- check input file for miranda
-		processes.append('RNAhybrid -b {5} -m {4} -e {6} -t {0} -q {2} -s {3} > {1}'.format(inp,'hyb_TMP_'+output, mature_file, UTR, rnahybid_max, rnahybrid_hit, rnahybrid_energy))	#<-- check support file for RNAhybrid
-		processes.append('{0}tools/targetscan_70.pl {0}support_files/miRNA/miR_family_info.txt {1} {2}'.format(file_path,'TS_'+inp, 'TS_TMP_'+output))#<-- check support file for targetscan
-	#pool the analysis of the 3 software (RNAhybrid is the bottleneck)
-	logging.info("Creating the pooling for the multi core process run up")
+		processes.append('miranda {2} {0} -sc {3} -en {4} -scale {5} -go {6} -ge {7} -out {1}'.format(inp,'mir_TMP_'+output, mature_file, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge))						#<-- check input file for miranda
+		processes.append('{0}/tools/targetscan_70.pl {0}/support_files/miRNA/miR_family_info.txt {1} {2}'.format(file_path,'TS_'+inp, 'TS_TMP_'+output))#<-- check support file for targetscan
+		processes.append('RNAhybrid -m {4} -t {0} -q {2} -s {3} > {1}'.format(inp,'hyb_TMP_'+output, mature_file, UTR, rnahybid_max))	#<-- check support file for RNAhybrid
+		
+	#pool the analysis of the 3 software (RNAhybrid is the bottleneck) - only if there are more than one circular
+	logging.info("Running miRNA:circRNA binding site predictions")
 	pool = Pool(processes=cores)
-	pool.map(run_process, tuple(processes))
+	pool.map(run_process, processes)
 	pool.close()
 	pool.join()
     #clean input and generate new pool for RNAhybrid
 	os.system('rm -rf *_inputfile.fa')
+	logging.info("Parsing RNAhybrid's output files")
 	dpool = Pool(processes=cores)
-	dpool.map(hybrid, tuple(out_list))
+	dpool.map(hybrid, out_list)
 	dpool.close()
 	dpool.join()
 	#create a single dataframe with all predicted circulars from 3 software
-	logging.info("Cleaning. Collecting results into a single location")
+	logging.info("Collecting results into a single location")
 	for output in out_list:
 		try:
 			DB = examine(output, DB, acronym)
@@ -444,7 +447,7 @@ def compare_predicted(coordinates, circulars, database):
 			tab = pd.concat([tab, multiple_coord('+', coordinates, database, circ)])
 	return tab
 
-#Select Miranda's output when multiple softwares are able o find same interaction
+#Select miRanda's output when multiple softwares are able o find same interaction
 #and report number of software that find that interaction
 def filter_interactions(valInt, AGO, tab):
 	validated_interactions = pybedtools.BedTool(valInt)
@@ -477,53 +480,62 @@ def filter_interactions(valInt, AGO, tab):
 
 #Add the notation from the CircBase database dump file
 #from the supprot files
-def add_CircBase_annotation(table, genome_version):
-	#get path of the CircBase dump
-	#need a getCircrPath?
-	CircBase = pd.read_csv('dump.bed', sep='\t', names=['Chrom', 'Start', 'End', 'Circ Name', 'Strand', 'Organism'])
+def add_CircBase_annotation(table, infile, genome_version):
+	#get path of the CircBase ref file
+	file_path = getCircrPath()
+	CircBase = pd.read_csv(file_path+'/support_files/circBase_circRNA.txt', sep='\t', names=['Chrom', 'Start', 'End', 'CircName', 'Strand', 'Organism'])
+	input_bed = pd.read_csv(infile, sep='\t', names=['Chrom', 'Start', 'End', 'CircName', 'Score', 'Strand'])
 	#selecting only circulars of the same genome version investigated
-	CircBase = CircBase.loc[CircBase['Organism'] == 'genome_version]
-	#merging into single entry for perfect match
+	CircBase = CircBase.loc[CircBase['Organism'] == genome_version]
+	#creating the reference column
 	CircBase['ToBeMatched'] = CircBase['Chrom'] + CircBase['Start'].astype(str) + CircBase['End'].astype(str) + CircBase['Strand'].astype(str)
-	table['ToBeMatched'] = table['Chrom'] + table['Start'].astype(str) + table['End'].astype(str) + table['Strand'].astype(str)
-	circ_match = list(table['ToBeMatched'].unique())
-	db_match = list(CircBase['ToBeMatched'].unique())
-	#matching on the unique sets
-	match = list(set(circ_match).intersection(set(db_match)))
-	#defaulting new column to output table
-	table['CircBase Name'] = 'Not Available'
-	#then adding matched instances
-	for m in match:
-	    table.loc[table['ToBeMatched'] == m, 'CircBase Name'] = CircBase.loc[CircBase['ToBeMatched'] == m, 'Name']
-	#and dropping not needed column
-	table = table.drop(['ToBeMatched'], 1)
+	# creating the reference dictionary from circBase
+	CircBase_dict = dict(zip(CircBase.ToBeMatched, CircBase.CircName))
+	match_dict = {}
+	for ix, xg in input_bed.groupby(['Chrom', 'CircName', 'Strand']):
+		xg = xg.sort_values(['Start'])
+		start = xg['Start'].iloc[0]
+		end = xg['End'].iloc[-1]
+		# creating the string to be matched in circBase
+		tbm = ix[0] + start.astype(str) + end.astype(str) + ix[2]
+		# if there is a match in circBase
+		if tbm in CircBase_dict:
+			# add circBase ID
+			match_dict[ix[1]] = CircBase_dict[tbm]
+		else:
+			# else, add 'Not Available'
+			match_dict[ix[1]] = 'Not Available'
+	
+	# now update the output interaction file
+	table['circBase Name'] = table['Circ Name']
+	table['circBase Name'] = table['circBase Name'].map(match_dict)
 	return table	
 
 ############## END CODE #################
-def main(bedfile, gtf, rseqc, AGO, TAXA, outfile, Genome, cores, valid_interactions, mirna_mature, mirna_acronym, coord, genome_version,
-		 miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybid_max, rnahybrid_hit, rnahybrid_energy):  # valid_interactions
+def main(bedfile, gtf, rrna, AGO, TAXA, outfile, Genome, cores, valid_interactions, mirna_mature, mirna_acronym, coord, genome_version,
+		 miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybrid_max):  # valid_interactions
 	begin = time.time()
 	if coord:
 		logging.info("Creating Circular Database and Retrieving Coordinates")
-		circ_dict, circulars, coordinates = starting_from_coord(bedfile, rseqc, Genome)
+		circ_dict, circulars, coordinates = starting_from_coord(bedfile, rrna, Genome)
 	else:
 		logging.info("Retrieving exon information")
-		data_exons, df_bed = calculate_exons(bedfile, gtf, rseqc, AGO)
+		data_exons, df_bed = calculate_exons(bedfile, gtf, rrna)
 		logging.info("Creating Circular Database and Retrieving Coordinates")
-		circ_dict, circulars, coordinates = create_circular_DB(data_exons, df_bed, rseqc, Genome)
-	logging.info("Performing analysis with RNAhybrid, Miranda and TargetScan")
-	circular_database = third_party_processes(circ_dict, TAXA, cores, mirna_mature, mirna_acronym, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybid_max, rnahybrid_hit, rnahybrid_energy)
-	logging.info("Comparing Predicted Circulars")
+		circ_dict, circulars, coordinates = create_circular_DB(data_exons, df_bed, rrna, Genome)
+	logging.info("Performing analysis with RNAhybrid, miRanda and TargetScan")
+	circular_database = third_party_processes(circ_dict, TAXA, cores, mirna_mature, mirna_acronym, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge, rnahybrid_max)
+	logging.info("Merging overlapping seed predictions")
 	table = compare_predicted(coordinates, circulars, circular_database)
 	logging.info("Adding Annotation to Predicted Interactions")
 	interactions = filter_interactions(valid_interactions, AGO, table)
 	logging.info('Adding information from CircBase annotation')
-	interactions = add_CircBase_annotation(interactions, genome_version)
+	interactions = add_CircBase_annotation(interactions, bedfile, genome_version)
 	logging.info('Printing results table in %s', outfile)
 	interactions.to_csv(outfile, index=False)
 	end = time.time() - begin
 	logging.info('Analysis complete. Closing Circr')
-	logging.info('Circr analysis performed in %s seconds', str(end))
+	logging.info('Circr analysis performed in %s minutes', str(round(end / 60)))
 
 
 if __name__ == "__main__":
@@ -533,7 +545,7 @@ if __name__ == "__main__":
 	    formatter_class=argparse.RawDescriptionHelpFormatter,
 	    description="Circr help section")
 	parser.add_argument("-i","--input", help="List of Circular RNA or their exon coordinates.")
-	parser.add_argument("-c","--coord", action="store_false", help="Defines if the input file contains exon coordinates rather than Circular RNA coordinates")
+	parser.add_argument("-c","--coord", action="store_true", help="Defines if the input file contains exon coordinates rather than Circular RNA coordinates")
 	parser.add_argument("-s","--organism", type=str,help="Defines the selected organism for analysis. Available organisms are: human, mouse, worm, fruitfly. Default is human.", default="human")
 	parser.add_argument("-v","--genome_version", type=str, help="Defines the genome version of the selected organism. Versions available are: human (hg19, hg38), mouse (mm9, mm10), worm (ce10, ce11), fruitfly (dm3, dm6). Default for human is hg38", default="none")
 	parser.add_argument("--gtf", type=str,help="Alternative location for GTF file for the analysis. Default uses data for selected organism.", default="none")
@@ -544,14 +556,12 @@ if __name__ == "__main__":
 	parser.add_argument("--validated_interactions", type=str, help="Alternative validated interactions file. Default uses data for selected organism.", default="none")
 	parser.add_argument("--threads", type=int, help="Set the number of threads for multiprocess. Default is 8 cores", default=8)
 	parser.add_argument("-o","--output", type=str,help="Defines output file name. Default is Circr_Analysis.txt", default="Circr_Analysis.csv")
-	parser.add_argument("-Msc", type=float, help="Set score threshold, default 140. MIRANDA Parameter", default="140.0")
-	parser.add_argument("-Men", type=float, help="Set energy threshold to -value Kcal/mol. Default 1 (-1). MIRANDA Parameter", default="1.0")
-	parser.add_argument("-Mscale", type=float, help="Set scaling parameter. Default 4. MIRANDA Parameter", default="4.0")
-	parser.add_argument("-Mgo", type=float, help="Set gap-open penalty to -value. Default 4 (-4). MIRANDA Parameter", default="4.0")
-	parser.add_argument("-Mge", type=float, help="Set gap-extend penalty to -value. Default 9 (-9). MIRANDA Parameter", default="9.0")
+	parser.add_argument("-Msc", type=float, help="Set score threshold, default 140. miRanda Parameter", default="140.0")
+	parser.add_argument("-Men", type=float, help="Set energy threshold to -value Kcal/mol. Default 1. miRanda Parameter", default="1.0")
+	parser.add_argument("-Mscale", type=float, help="Set scaling parameter. Default 4. miRanda Parameter", default="4.0")
+	parser.add_argument("-Mgo", type=float, help="Set gap-open penalty to -value. Default 4 (-4). miRanda Parameter", default="-4.0")
+	parser.add_argument("-Mge", type=float, help="Set gap-extend penalty to -value. Default 9 (-9). miRanda Parameter", default="-9.0")
 	parser.add_argument("-RHmax", type=int, help="The  maximum  allowed  length of a target sequence. Default is 10000000. RNAhybrid Parameter", default="10000000")
-	parser.add_argument("-RHhit", type=int, help="Maximal number of hits to show. Default is 100000000. RNAhybrid Parameter", default="100000000")
-	parser.add_argument("-RHen", type=int, help="Energy cut-off. Default is 0. RNAhybrid Parameter", default="0")
 
 	args = parser.parse_args()
 
@@ -605,6 +615,4 @@ if __name__ == "__main__":
 		 args.Mscale,
 		 args.Mgo,
 		 args.Mge,
-		 args.RHmax,
-		 args.RHhit,
-		 args.RHen) #valid_interaction,
+		 args.RHmax)
