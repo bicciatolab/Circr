@@ -228,12 +228,13 @@ def hybrid(fileIn):
 	DF.to_csv('hyb_Parsed_'+fileIn, index=False)
 	os.system('rm -rf {0}'.format('hyb_TMP_'+fileIn))
 
-def TS_parser(fileIn, DB):
+def TS_parser(fileIn, DB, acronym):
 	df = pd.read_csv('TS_TMP_'+fileIn, sep='\t')
 	df = df[['a_Gene_ID','miRNA_family_ID','UTR_start','UTR_end','Site_type']]
 	df = df.rename(columns={'miRNA_family_ID':'miRNA Name','a_Gene_ID':'Circ Name','Site_type':'Seed Category','UTR_start':'Start','UTR_end':'End'})
 	df['ID'] = np.arange(len(DB),(len(DB)+len(df)))
 	df['ID'] = 'INT_TS_'+df['ID'].astype(str)
+	df['miRNA Name'] = acronym + '-' + df['miRNA Name']
 	os.system('rm -rf {0}'.format('TS_TMP_'+fileIn))
 	return(pd.concat([DB,df]).reset_index(drop=True))
 
@@ -262,6 +263,7 @@ def single_coord(strand, coord_final, DB, circ):
 
 def multiple_coord(strand, coord_final, DB, circ):
 	chunk = coord_final.loc[coord_final['name'] == circ]
+	chunk['score'] = pd.to_numeric(chunk['score'])
 	if strand == '-':
 		chunk = chunk.reindex(index=chunk.index[::-1])
 		circ_chunk = DB.loc[DB['Circ Name'] == circ].reset_index(drop=True)
@@ -269,7 +271,7 @@ def multiple_coord(strand, coord_final, DB, circ):
 		df_c = circ_chunk.iloc[IDX, :]
 		circ_chunk = circ_chunk.drop(circ_chunk.index[IDX]).reset_index(drop=True)
 		df_c['fac_Start'] = chunk['end'].iloc[0] - df_c['End'].astype(int)
-		df_c['fac_End'] = chunk['end'].iloc[0] - df_c['End'].astype(int)
+		df_c['fac_End'] = chunk['end'].iloc[0] - df_c['Start'].astype(int)
 	else:
 		circ_chunk = DB.loc[DB['Circ Name'] == circ].reset_index(drop=True)
 		IDX = circ_chunk.index[circ_chunk['Start'].astype(float) < chunk['score'].iloc[0]].to_list()
@@ -398,34 +400,49 @@ def third_party_processes(data_dict, taxa_number, cores, mature_file, acronym, m
 		output = str(item)[1:]+'.txt'
 		out_list.append(output)
 		inp = str(item)[1:]+'_inputfile.fa'
-		w = csv.writer(open(inp,'w'))
-		k = csv.writer(open('TS_'+inp,'w'))
-		w.writerow([item])
-		w.writerow([data_dict[item]])
-		k.writerow([item.lstrip('>')+'\t'+str(taxa_number)+'\t'+data_dict[item]])
+		w = open(inp,'w')
+		k = open('TS_'+inp,'w')
+		#w = csv.writer(open(inp,'w'))
+		#k = csv.writer(open('TS_'+inp,'w'))
+		#w.writerow([item])
+		w.write(item+'\n')
+		#w.writerow([data_dict[item]])
+		w.write(data_dict[item]+'\n')
+		#k.writerow([item.lstrip('>')+'\t'+str(taxa_number)+'\t'+data_dict[item]])
+		k.write(item.lstrip('>')+'\t'+str(taxa_number)+'\t'+data_dict[item]+'\n')
+		w.close()
+		k.close()
 		processes.append('miranda {2} {0} -sc {3} -en {4} -scale {5} -go {6} -ge {7} -out {1}'.format(inp,'mir_TMP_'+output, mature_file, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge))						#<-- check input file for miranda
 		processes.append('{0}/tools/targetscan_70.pl {0}/support_files/miRNA/miR_family_info.txt {1} {2}'.format(file_path,'TS_'+inp, 'TS_TMP_'+output))#<-- check support file for targetscan
 		processes.append('RNAhybrid -m {4} -t {0} -q {2} -s {3} > {1}'.format(inp,'hyb_TMP_'+output, mature_file, UTR, rnahybid_max))	#<-- check support file for RNAhybrid
 		
 	#pool the analysis of the 3 software (RNAhybrid is the bottleneck) - only if there are more than one circular
-	logging.info("Running miRNA:circRNA binding site predictions")
-	pool = Pool(processes=cores)
-	pool.map(run_process, processes)
-	pool.close()
-	pool.join()
-    #clean input and generate new pool for RNAhybrid
-	os.system('rm -rf *_inputfile.fa')
-	logging.info("Parsing RNAhybrid's output files")
-	dpool = Pool(processes=cores)
-	dpool.map(hybrid, out_list)
-	dpool.close()
-	dpool.join()
+	if len(out_list)==1:
+		logging.info("Running miRNA:circRNA binding site predictions")
+		for p in processes:
+			run_process(p)
+		logging.info("Parsing RNAhybrid's output files")
+		hybrid(out_list[0])
+		os.system('rm -rf *_inputfile.fa')
+	else:
+		logging.info("Running miRNA:circRNA binding site predictions")
+		pool = Pool(processes=cores)
+		pool.map(run_process, processes)
+		pool.close()
+		pool.join()
+		#clean input and generate new pool for RNAhybrid
+		os.system('rm -rf *_inputfile.fa')
+		logging.info("Parsing RNAhybrid's output files")
+		dpool = Pool(processes=cores)
+		dpool.map(hybrid, out_list)
+		dpool.close()
+		dpool.join()
 	#create a single dataframe with all predicted circulars from 3 software
 	logging.info("Collecting results into a single location")
 	for output in out_list:
 		try:
 			DB = examine(output, DB, acronym)
-			DB = TS_parser(output, DB)
+			DB = TS_parser(output, DB, acronym)
 			DB = RH_parser(output, DB)
 		except FileNotFoundError:
 			logging.warning('File %s not found. Skipping', output)
@@ -471,8 +488,8 @@ def filter_interactions(valInt, AGO, tab):
 	filtered['Validated'] = 'No'
 	filtered['AGO'] = 'No'
 	filtered_bed = pybedtools.BedTool.from_dataframe(filtered)
-	val_intersected = filtered_bed.intersect(validated_interactions, wa=True, wb=True, f=0.50, r=True).to_dataframe(names=list(range(0,len(filtered.columns) + len(validated_interactions.to_dataframe().columns))))
-	AGO_intersected = filtered_bed.intersect(AGO_interactions, wa=True, wb=True, f=1, r=True).to_dataframe(names=list(range(0,len(filtered.columns) + len(AGO_interactions.to_dataframe().columns))))
+	val_intersected = filtered_bed.intersect(validated_interactions, wa=True, wb=True, f=0.50).to_dataframe(names=list(range(0,len(filtered.columns) + len(validated_interactions.to_dataframe().columns))))
+	AGO_intersected = filtered_bed.intersect(AGO_interactions, wa=True, wb=True, f=1).to_dataframe(names=list(range(0,len(filtered.columns) + len(AGO_interactions.to_dataframe().columns))))
 	validated = val_intersected.loc[val_intersected[3] == val_intersected.iloc[:,-3]]
 	filtered = add_interactions(filtered, validated, 'Validated')
 	filtered = add_interactions(filtered, AGO_intersected, 'AGO')
@@ -504,11 +521,11 @@ def add_CircBase_annotation(table, infile, genome_version):
 			match_dict[ix[1]] = CircBase_dict[tbm]
 		else:
 			# else, add 'Not Available'
-			match_dict[ix[1]] = 'Not Available'
+			match_dict[ix[1]] = 'NA'
 	
 	# now update the output interaction file
-	table['circBase Name'] = table['Circ Name']
-	table['circBase Name'] = table['circBase Name'].map(match_dict)
+	table['circBase ID'] = table['Circ Name']
+	table['circBase ID'] = table['circBase ID'].map(match_dict)
 	return table	
 
 ############## END CODE #################
