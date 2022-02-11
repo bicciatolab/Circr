@@ -142,6 +142,7 @@ chr17	39980067	39980222	CiCo_mm9_circ_002584	.	-
 
 ```
 
+If users have a FASTA file with the circRNA sequence, they must first align the sequence to the genome using tools such as BLAST (https://blast.ncbi.nlm.nih.gov/Blast.cgi) or BLAT (https://genome.ucsc.edu/cgi-bin/hgBlat) setting the appropriate organism and genome version. Then the resulting genomic coordinates must be formatted into a tab delimited file compatible with Circr. 
 `Circr` can be run with the following command
 
 ```bash
