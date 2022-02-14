@@ -122,9 +122,9 @@ optional arguments:
                         Alternative validated interactions file. Default uses data for selected organism.
   --threads THREADS     Set the number of threads for multiprocess. Default is 8 cores
   -o OUTPUT, --output OUTPUT
-                        Defines output file name. Default is Circr_Analysis.txt
+                        Defines output file name. Default is Circr_Analysis.csv
 
-Detailed arguments for third party softwares. Adjust ONLY if necessary. 
+Detailed arguments for third party softwares. Adjust ONLY if necessary.
 Default values have been tested and approved by the original developers:
   -Msc                  Set score threshold, default 140. miRanda Parameter
   -Men                  Set energy threshold to -value Kcal/mol. Default 1. miRanda Parameter
@@ -132,7 +132,7 @@ Default values have been tested and approved by the original developers:
   -Mgo                  Set gap-open penalty to -value. Default 4 (-4). miRanda Parameter
   -Mge                  Set gap-extend penalty to -value. Default 9 (-9). miRanda Parameter
   -RHmax                The  maximum  allowed  length of a target sequence. Default is 10000000. RNAhybrid Parameter
-  
+
 ```
 
 ### Test data
@@ -152,7 +152,7 @@ chr17	39980067	39980222	CiCo_mm9_circ_002584	.	-
 
 ```
 
-If users have a FASTA file with the circRNA sequence, they must first align the sequence to the genome using tools such as BLAST (https://blast.ncbi.nlm.nih.gov/Blast.cgi) or BLAT (https://genome.ucsc.edu/cgi-bin/hgBlat) setting the appropriate organism and genome version. Then the resulting genomic coordinates must be formatted into a tab delimited file compatible with Circr. 
+If users have a FASTA file with the circRNA sequence, they must first align the sequence to the genome using tools such as BLAST (https://blast.ncbi.nlm.nih.gov/Blast.cgi) or BLAT (https://genome.ucsc.edu/cgi-bin/hgBlat) setting the appropriate organism and genome version. Then the resulting genomic coordinates must be formatted into a tab delimited file compatible with Circr.
 
 `Circr` can be run with the following command
 

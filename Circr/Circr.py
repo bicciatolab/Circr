@@ -415,7 +415,7 @@ def third_party_processes(data_dict, taxa_number, cores, mature_file, acronym, m
 		processes.append('miranda {2} {0} -sc {3} -en {4} -scale {5} -go {6} -ge {7} -out {1}'.format(inp,'mir_TMP_'+output, mature_file, miranda_sc, miranda_en, miranda_scale, miranda_go, miranda_ge))						#<-- check input file for miranda
 		processes.append('{0}/tools/targetscan_70.pl {0}/support_files/miRNA/miR_family_info.txt {1} {2}'.format(file_path,'TS_'+inp, 'TS_TMP_'+output))#<-- check support file for targetscan
 		processes.append('RNAhybrid -m {4} -t {0} -q {2} -s {3} > {1}'.format(inp,'hyb_TMP_'+output, mature_file, UTR, rnahybid_max))	#<-- check support file for RNAhybrid
-		
+
 	#pool the analysis of the 3 software (RNAhybrid is the bottleneck) - only if there are more than one circular
 	if len(out_list)==1:
 		logging.info("Running miRNA:circRNA binding site predictions")
@@ -522,11 +522,11 @@ def add_CircBase_annotation(table, infile, genome_version):
 		else:
 			# else, add 'Not Available'
 			match_dict[ix[1]] = 'NA'
-	
+
 	# now update the output interaction file
 	table['circBase ID'] = table['Circ Name']
 	table['circBase ID'] = table['circBase ID'].map(match_dict)
-	return table	
+	return table
 
 ############## END CODE #################
 def main(bedfile, gtf, rrna, AGO, TAXA, outfile, Genome, cores, valid_interactions, mirna_mature, mirna_acronym, coord, genome_version,
@@ -572,7 +572,7 @@ if __name__ == "__main__":
 	parser.add_argument("--AGO", type=str, help="Alternative AGO peaks file. Default uses data for selected organism.", default="none")
 	parser.add_argument("--validated_interactions", type=str, help="Alternative validated interactions file. Default uses data for selected organism.", default="none")
 	parser.add_argument("--threads", type=int, help="Set the number of threads for multiprocess. Default is 8 cores", default=8)
-	parser.add_argument("-o","--output", type=str,help="Defines output file name. Default is Circr_Analysis.txt", default="Circr_Analysis.csv")
+	parser.add_argument("-o","--output", type=str,help="Defines output file name. Default is Circr_Analysis.csv", default="Circr_Analysis.csv")
 	parser.add_argument("-Msc", type=float, help="Set score threshold, default 140. miRanda Parameter", default="140.0")
 	parser.add_argument("-Men", type=float, help="Set energy threshold to -value Kcal/mol. Default 1. miRanda Parameter", default="1.0")
 	parser.add_argument("-Mscale", type=float, help="Set scaling parameter. Default 4. miRanda Parameter", default="4.0")
