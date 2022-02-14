@@ -123,6 +123,16 @@ optional arguments:
   --threads THREADS     Set the number of threads for multiprocess. Default is 8 cores
   -o OUTPUT, --output OUTPUT
                         Defines output file name. Default is Circr_Analysis.txt
+
+Detailed arguments for third party softwares. Adjust ONLY if necessary. 
+Default values have been tested and approved by the original developers:
+  -Msc                  Set score threshold, default 140. miRanda Parameter
+  -Men                  Set energy threshold to -value Kcal/mol. Default 1. miRanda Parameter
+  -Mscale               Set scaling parameter. Default 4. miRanda Parameter
+  -Mgo                  Set gap-open penalty to -value. Default 4 (-4). miRanda Parameter
+  -Mge                  Set gap-extend penalty to -value. Default 9 (-9). miRanda Parameter
+  -RHmax                The  maximum  allowed  length of a target sequence. Default is 10000000. RNAhybrid Parameter
+  
 ```
 
 ### Test data
@@ -211,10 +221,10 @@ Indipendently of how `Circr` is run, it will return a comma separated file consi
 and a few example lines are provided
 
 ```
-Chrom,Start,End,miRNA Name,Circ Name,Strand,Seed Category,ID,Software Matched,Validated,AGO
-chr1,10192694,10192715,mmu-let-7g-5p,CiCo_mm9_circ_000003,-,8mer,INT_M_0,1,No,No
-chr1,10202507,10202528,mmu-let-7g-3p,CiCo_mm9_circ_000003,-,7mer-m8,INT_M_1,1,No,No
-chr1,10201577,10201598,mmu-let-7i-5p,CiCo_mm9_circ_000003,-,No Seed,INT_M_2,1,No,No
-chr1,10192680,10192702,mmu-let-7i-3p,CiCo_mm9_circ_000003,-,7mer-m8,INT_M_3,1,No,No
-chr1,10201743,10201765,mmu-miR-1a-1-5p,CiCo_mm9_circ_000003,-,7mer-m8,INT_M_4,1,No,No
+Chrom,Start,End,miRNA Name,Circ Name,Strand,Seed Category,ID,Software Matched,Validated,AGO,circBaseID
+chr1,10192694,10192715,mmu-let-7g-5p,CiCo_mm9_circ_000003,-,8mer,INT_M_0,1,No,No,NA
+chr1,10202507,10202528,mmu-let-7g-3p,CiCo_mm9_circ_000003,-,7mer-m8,INT_M_1,1,No,No,NA
+chr1,10201577,10201598,mmu-let-7i-5p,CiCo_mm9_circ_000003,-,No Seed,INT_M_2,1,No,No,NA
+chr1,10192680,10192702,mmu-let-7i-3p,CiCo_mm9_circ_000003,-,7mer-m8,INT_M_3,1,No,No,NA
+chr1,10201743,10201765,mmu-miR-1a-1-5p,CiCo_mm9_circ_000003,-,7mer-m8,INT_M_4,1,No,No,NA
 ```
