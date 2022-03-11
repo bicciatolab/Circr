@@ -11,7 +11,7 @@ Key features of Circr include:
 
 #### Citation:
 
-Dori M, Caroli J and Forcato M (2022) Circr, a Computational Tool to Identify miRNA:circRNA Associations. _Front. Bioinform._ 2:852834. doi: [10.3389/fbinf.2022.852834](10.3389/fbinf.2022.852834)
+Dori M, Caroli J and Forcato M (2022) Circr, a Computational Tool to Identify miRNA:circRNA Associations. _Front. Bioinform._ 2:852834. doi: [10.3389/fbinf.2022.852834](https://doi.org/10.3389/fbinf.2022.852834)
 
 #### Contacts:
 
