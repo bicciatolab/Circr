@@ -9,7 +9,8 @@ Key features of Circr include:
 3. Fast calculation and multi thread compatibility
 4. Easy to investigate excel structured output table
 
-### Citation:
+#### Citation:
+
 Dori M, Caroli J and Forcato M (2022) Circr, a Computational Tool to Identify miRNA:circRNA Associations. _Front. Bioinform._ 2:852834. doi: [10.3389/fbinf.2022.852834](10.3389/fbinf.2022.852834)
 
 #### Contacts:
