@@ -253,7 +253,7 @@ def single_coord(strand, coord_final, DB, circ):
 		circ_chunk['fac_End'] = chunk.iloc[0]['end'] - circ_chunk['Start'].astype(int)
 	else:
 		circ_chunk['fac_Start'] = circ_chunk['Start'].astype(int) + chunk.iloc[0]['start']
-		circ_chunk['fac_End'] = circ_chunk['End'].astype(int) + chunk.iloc[0]['end']
+		circ_chunk['fac_End'] = circ_chunk['End'].astype(int) + chunk.iloc[0]['start']
 	circ_chunk['Start'] = circ_chunk['fac_Start']
 	circ_chunk['End'] = circ_chunk['fac_End']
 	circ_chunk = circ_chunk.drop(['fac_Start','fac_End'], axis = 1)
@@ -294,7 +294,7 @@ def multiple_coord(strand, coord_final, DB, circ):
 			df['fac_End'] = chunk['end'].iloc[i] - (df['Start'].astype(int) - chunk['score'].iloc[i-1])
 		else:
 			df['fac_Start'] = chunk['start'].iloc[i] + (df['Start'].astype(int) - chunk['score'].iloc[i-1])
-			df['fac_End'] = chunk['end'].iloc[i] + (df['End'].astype(int) - chunk['score'].iloc[i-1])
+			df['fac_End'] = chunk['start'].iloc[i] + (df['End'].astype(int) - chunk['score'].iloc[i-1])
 		df['Start'] = df['fac_Start']
 		df['End'] = df['fac_End']
 		df = df.drop(['fac_Start','fac_End'], axis = 1)
